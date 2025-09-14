@@ -1,9 +1,10 @@
 #
 esphome:
-  name: smart_blinds
+  name: xiaoc3-blind-roller-test
+  friendly_name: xiaoc3-blind-roller-test
 
 esp32:
-  board: seeed_xiao_esp32c3
+  board: esp32-c3-devkitm-1
   framework:
     type: arduino
 
@@ -12,11 +13,12 @@ logger:
 
 # Enable Home Assistant API
 api:
-  password: ""
+  encryption:
+    key: !secret blinds_api_key
 
 ota:
   - platform: esphome
-    password: ""
+    password: !secret blinds_ota_key
 
 wifi:
   ssid: !secret wifi_ssid
@@ -24,114 +26,40 @@ wifi:
 
   # Fallback hotspot if WiFi fails
   ap:
-    ssid: "Smart Blinds Fallback Hotspot"
-    password: "efHvj6Nu5NKm"
+    ssid: "Xiaoc3-Blind-Roller-Test"
+    password: !secret blinds_fallback_password
 
 captive_portal:
+    
+sensor:
+  - platform: adc
+    id: slide_pos
+    pin: GPIO03
+    name: "Slide Potentiometer Value"
+    attenuation: auto
+    update_interval: 500ms
 
-# -----------------------------
-# Position Tracking
-# -----------------------------
-# globals:
-#   - id: blind_position
-#     type: float
-#     restore_value: yes
-#     initial_value: "0.0"
+  - platform: adc
+    id: hall_sens
+    pin: GPIO04
+    name: "Hall Effect Sensor Value"
+    attenuation: auto
+    update_interval: 500ms
 
-# -----------------------------
-# Cover (the blinds entity)
-# -----------------------------
-cover:
-  - platform: template
-    name: "Window Blinds"
-    id: window_blinds
-    device_class: blind
 
-    open_action:
-      - output.turn_on: motor_forward
-      # Replace the below with hall effect code
-      - delay: 5s
-      - output.turn_off: motor_forward
+fan:
+  - platform: hbridge
+    id: motor_1
+    name: "Blind Motor"
+    pin_a: mot_fwd_speed
+    pin_b: mot_dir_switch
+    decay_mode: slow   # slow decay mode (coasting) or fast decay (braking).
+    speed_count: 20
 
-    close_action:
-      - output.turn_on: motor_reverse
-      - delay: 5s
-      - output.turn_off: motor_reverse
-
-    stop_action:
-      - output.turn_off: motor_enable
-      - output.turn_off: motor_forward
-      - output.turn_off: motor_reverse
-
-    optimistic: true
-    has_position: false
-
-# -----------------------------
-# Motor driver (L298N)
-# -----------------------------
 output:
-  - platform: gpio
-    pin: GPIO3 # D1 - IN1 on L298N
-    id: motor_forward
-  - platform: gpio
-    pin: GPIO4 # D2 - IN2 on L298N
-    id: motor_reverse
-  - platform: gpio
-    pin: GPIO5 # D3 - ENA on L298N (PWM-capable)
-    id: motor_enable
-# -----------------------------
-# Hall Effect Sensor (limit switch at top)
-# -----------------------------
-# binary_sensor:
-# - platform: gpio
-#   pin:
-#     number: GPIO6 # D4
-#     mode: INPUT_PULLUP
-#   id: hall_sensor
-#   name: "Blind Top Position"
-#   filters:
-#     - invert:
-#   on_press:
-#     then:
-#       - cover.stop: window_blinds
-#       - cover.template.publish:
-#           id: window_blinds
-#           position: 1.0 # 100% open when sensor triggers
-
-# -----------------------------
-# Button for Toggle (open/close)
-# -----------------------------
-# - platform: gpio
-#   pin:
-#     number: GPIO7 # D5
-#     mode: INPUT_PULLUP
-#     inverted: true
-#   name: "Blinds Button"
-#   on_press:
-#     then:
-#       - if:
-#           condition:
-#             cover.is_closed: window_blinds
-#           then:
-#             - cover.open: window_blinds
-#           else:
-#             - cover.close: window_blinds
-# interval:
-#   - interval: 200ms
-#     then:
-#       - if:
-#           condition:
-#             cover.is_opening: window_blinds
-#           then:
-#             - lambda: |-
-#                 id(blind_position) += 0.01;  // adjust based on speed
-#                 if (id(blind_position) > 1.0) id(blind_position) = 1.0;
-#                 id(window_blinds).position = id(blind_position);
-#       - if:
-#           condition:
-#             cover.is_closing: window_blinds
-#           then:
-#             - lambda: |-
-#                 id(blind_position) -= 0.01;  // adjust based on speed
-#                 if (id(blind_position) < 0.0) id(blind_position) = 0.0;
-#                 id(window_blinds).position = id(blind_position);
+  - platform: ledc
+    id: mot_fwd_speed
+    pin: GPIO21
+  - platform: ledc
+    id: mot_dir_switch
+    pin: GPIO7
