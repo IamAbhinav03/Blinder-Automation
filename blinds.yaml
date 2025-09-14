@@ -1,3 +1,4 @@
+#
 esphome:
   name: xiaoc3-blind-roller-test
   friendly_name: xiaoc3-blind-roller-test
@@ -23,14 +24,13 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  # Fallback hotspot if WiFi fails
   ap:
     ssid: "Xiaoc3-Blind-Roller-Test"
     password: !secret blinds_fallback_password
 
 captive_portal:
     
-
 sensor:
   - platform: adc
     id: slide_pos
