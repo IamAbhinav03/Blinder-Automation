@@ -1,3 +1,7 @@
 secrets.yaml
 .esphome/
 .vscode/
+
+secrets.yaml
+.venv/
+.esphome/
